@@ -10,9 +10,10 @@ use Data::Dumper;
 use SqlBatch::Configuration;
 use SqlBatch::PlanTagFilter;
 use SqlBatch::PlanReader;
+use SqlBatch::Plan;
 
 sub new {
-    my ($class, $argv, %opt)=@_;
+    my ($class, @argv)=@_;
 
     my $configfile;
     my $directory=".";
@@ -43,7 +44,7 @@ sub new {
     my @tags          = split /,/ $tags;
     my @exclude_files = split /,/ $exclude_files;
 
-    my $config = DatabaseUtillity::Configuration(
+    my $config = SqlBatch::Configuration(
 	$configfile,
 	datasource       => $datasource,
 	username         => $username,
@@ -66,6 +67,10 @@ sub new {
 
 sub config {
     my $self = shift;
+    my $new  = shift;
+    
+    $self->{config} = $new 
+	if defined $new;
 
     return $self->{config};
 }
@@ -75,14 +80,16 @@ sub run {
 
     my $config = $self->config();
     my $dir    = $config->item('directory');
-    my $filter = DatabaseUtillity::PlanTagFilter->new(@{$config->item('tags')});    
-    my $reader = DatabaseUtillity::PlanReader->new(
+    my $plan   = SqlBatch::Plan->new($config);
+    my $filter = SqlBatch::PlanTagFilter->new(@{$config->item('tags')});    
+    $plan->add_filter($filter);
+    my $reader = SqlBatch::PlanReader->new(
 	$dir,
-	$filter,
+	$plan,
 	$config->items_hash(),
 	);
 
-    my $plan   = $reader->gross_execution_plan());
+    my $plan   = $reader->execution_plan());
 }
 
 1;

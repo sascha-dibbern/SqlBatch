@@ -24,7 +24,7 @@ my $instruction2 = {
 };
 
 my $filter0 = SqlBatch::PlanTagFilter->new();
-say Dumper($filter0);
+#say Dumper($filter0);
 
 ok(! $filter0->is_allowed_instruction($instruction1),"No tags vs. run-if => disallowed");
 ok($filter0->is_allowed_instruction($instruction2),"No tags vs. run-not-if  => allowed");
