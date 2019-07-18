@@ -9,52 +9,31 @@ use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Data::Dumper;
 use Text::CSV_XS;
+use SqlBatch::Plan;
 
 sub new {
-    my ($class, $directory, $plan_filter, %opt)=@_;
+    my ($class, $directory, $plan, $config)=@_;
 
     my $self = {
-	%opt,
-	plan_filter => $plan_filter,
- 	directory   => $directory,
+	config      => $config,
+	plan        => $plan,
+ 	directory   => $directory,	
     };
 
     return bless $self, $class;
 }
 
-sub gross_execution_plan {
+sub load {
     my $self = shift;
 
-    unless (defined $self->{gross_execution_plan}) {
-	say "Loading gross plan";
+    say "Loading plan";
+    my $plan       = $self->{plan};
+    my @file_paths = $self->files;
 
-	my @file_paths = $self->files;
-
-	my @gross_plan;
-	for my $current_file (@file_paths) {
-	    $self->{current_file} = $current_file;
-	    my $task_plan = $self->parse_tasks_file;
-	    @gross_plan = (@gross_plan, @$task_plan);
-	}
-	
-	$self->{gross_execution_plan} = \@gross_plan;
+    for my $current_file (@file_paths) {
+	$self->{current_file} = $current_file;
+	$plan->add_instructions($self->load_tasks_file_instructions);
     }
-    
-    return wantarray ? @{$self->{gross_execution_plan}} : $self->{gross_execution_plan};
-}
-
-sub execution_plan {
-    my $self = shift;
-
-    my $gp = $self->gross_execution_plan();
-    my $plan;
-    if (defined $self->{plan_filter}) {
-	$plan = $self->{plan_filter}->filter($gp);
-    } else {
-	$plan = $gp;
-    }
-
-    return wantarray ? @$plan : $plan;
 }
 
 sub files {
@@ -64,13 +43,15 @@ sub files {
     if (scalar(@override)) {
 	$self->{files} = \@override;
     }
+    
+    my $config = $self->{config};
 
     unless (defined $self->{files}) {
-	my $from_file     = $self->{from_file};
-	my $to_file       = $self->{to_file};
-	my $exclude_files = $self->{exclude_files};
+	my $from_file     = $config->item(from_file);
+	my $to_file       = $config->item(to_file);
+	my $exclude_files = $config->item(exclude_files);
 	my %exclusions    = map { $_ => 1 } @$exclude_files;
-	my $dir           = $self->{directory};
+	my $dir           = $config->item(directory);
 	
 	opendir(my $dh, $dir) || croak "Can't opendir $dir: $!";
 	my @all_files = sort grep { -f "$dir/$_" } readdir($dh);
@@ -98,14 +79,14 @@ sub files {
 	    $addfile
 	} @all_files;
 	
-	my @paths      = map { $self->{directory}.'/'.$_ } @files;
+	my @paths      = map { $dir.'/'.$_ } @files;
 	$self->{files} = \@paths;
     }
 
     return wantarray ? @{$self->{files} } : $self->{files} ;
 }
 
-sub parse_tasks_file {
+sub load_tasks_file_instructions {
     my $self         = shift;
     my $current_file = shift // $self->{current_file};
 
@@ -120,36 +101,85 @@ sub parse_tasks_file {
     my %tags;
     my @sequence;
 
+    my $line_nr = 1;
     while (scalar(@lines)) {
+	my @instructions;
 	my $line = shift @lines;
-	my %instruction;
-
+	my %args = (
+	    file    => $current_file,
+	    line_nr => $line_nr,	
+	    );
 	if ($line =~ /^--SQL--/) {
-	    my %args     = $self->_parse_section_args("--SQL--",$line);
-	    %instruction = $self->_sql_instruction(%args);
+ 	    %args          = (%args,$self->_parse_section_args("--SQL--",$line));
+	    @instructions  = $self->_sql_instruction(%args);
 	} elsif ($line =~ /^--INSERT--/) {
-	    my %args     = $self->_parse_section_args("--INSERT--",$line);
-	    %instruction = $self->_insert_csv_instruction(%args);
+	    my $table;
+	    eval {
+		%args = (%args,$self->_parse_section_args(
+			     "--INSERT--",
+			     $line,
+			     "table=s"=>\$table,
+			 ));
+	    }
+	    if ($@) {
+		croak "INSERT-section needs --table argument: $@";
+	    }
+	    $args{table}   = $table;
+	    @instructions  = $self->_insert_csv_instructions(%args);
 	} elsif ($line =~ /^--DELETE--/) {
-	    my %args     = $self->_parse_section_args("--DELETE--",$line);
-	    %instruction = $self->_delete_csv_instruction(%args);
+	    my $table;
+	    eval {
+		%args = (%args,$self->_parse_section_args(
+			     "--DELETE--",
+			     $line,
+			     "table=s"=>\$table,
+			 ));
+	    }
+	    if ($@) {
+		croak "DELETE-section needs --table argument: $@";
+	    }
+	    $args{table}   = $table;
+	    @instructions  = $self->_delete_csv_instructions(%args);
+	} elsif ($line =~ /^--BEGIN--/) {
+	    @instructions = (
+		{
+		    %args,
+		    type => "BEGIN",
+		}
+		);
+	} elsif ($line =~ /^--COMMIT--/) {
+	    @instructions = (
+		{
+		    %args,
+		    type => "COMMIT",
+		}
+		);
+	} elsif ($line =~ /^--ROLLBACK--/) {
+	    @instructions = (
+		{
+		    %args,
+		    type => "ROLLBACK",
+		}
+		);
 	} else {
 	    say "Ignored line with content: $line";
 	    next;
 	}
 
 	$instruction{origin_file} = $current_file;
-	push @sequence,\%instruction;
+	push @sequence,@instruction;
 
+	$line_nr++;
     }
 
-    return wantarray ? @sequence : \@sequence;
+    return @sequence;
 }
 
 sub _parse_section_args {
-    my $self    = shift;
-    my $section = shift;
-    my $line    = shift;
+    my $self       = shift;
+    my $section    = shift;
+    my $line       = shift;
+    my @extra_args = @_;
 
     chomp $line;
     $line =~ /$section(.*)/;
@@ -164,11 +194,12 @@ sub _parse_section_args {
 
     GetOptionsFromArray(
 	\@arg_strings,
-	'id:s',
-	'separator:s',
-	'quote:s',
-	'end:s',
-	'tags:s',
+	'id:s'        => \$id,
+	'separator:s' => \$separator,
+	'quote:s'     => \$quote,
+	'end:s'       => \$end,
+	'tags:s'      => \$tags,
+	%extra_args,
 	);
 
     $end         = '--'.$end.'--';
@@ -181,10 +212,10 @@ sub _parse_section_args {
     } grep { ! /^-/ } @tags;
 
     my %args = (
-	id            => $id,
-	separator     => $separator,
-	quotes        => $quote,
-	end           => $end,
+	id               => $id,
+	separator        => $separator,
+	quotes           => $quote,
+	end              => $end,
 	run_only_if_tags => \%pos_tags,
 	run_not_if_tags  => \%neg_tags,
     );
@@ -206,36 +237,51 @@ sub _sql_instruction {
 	push @sqllines,$line;
     }
 
-    return (
+    return {
 	%args,
 	type => "SQL",
 	sql  => join("\n",@sqllines),
-    );    
+    };    
 
 }
 
-sub _insert_csv_instruction {
+sub _insert_csv_instructions {
     my $self  = shift;
     my %args  = @_;
-    my $lines = $self->{lines_to_parse};
 
-    return (
-	%args,
-	type  => "INSERT",
-	items => $self->_parse_csv($lines,%args),
-	);
+    my $sth_placeholder = undef;
+    my $lines           = $self->{lines_to_parse};
+    my @instructions    = map {
+	my %data = (
+	    %args,
+	    type            => "INSERT",
+	    data            => $_,
+	    sth_placeholder => \$sth_placeholder,
+	    );
+	\%data
+    } $self->_parse_csv($lines,%args);
+
+    return @instructions;
 }
 
-sub _delete_csv_instruction {
+sub _delete_csv_instructions {
     my $self  = shift;
     my %args  = @_;
+
+    my $sth_placeholder = undef;
     my $lines = $self->{lines_to_parse};
 
-    return (
-	%args,
-	type  => "DELETE",
-	items => $self->_parse_csv($lines,%args),
-	);
+    my @instructions = map {
+	my %data = (
+	    %args,
+	    type            => "DELETE",
+	    data            => $_,
+	    sth_placeholder => \$sth_placeholder,
+	    );
+	\%data
+    } $self->_parse_csv($lines,%args);
+
+    return @instructions;
 }
 
 sub _parse_csv {
@@ -246,7 +292,7 @@ sub _parse_csv {
     my $end = $args{end};
     my @csvlines;
     while (my $line = shift @$lines) {
-	last if ($line =~/^$end/);
+	last if ($line =~ /^$end/);
 
 	# Add line to SQL-statement
 	push @csvlines,$line;
@@ -258,10 +304,10 @@ sub _parse_csv {
     # Read/parse CSV    
     my $csv = Text::CSV_XS->new (
 	{ 
-	    sep => $args{separator},
-	    quote => $args{quote},
-	    binary => 1, 
-	    auto_diag => 1,
+	    sep         => $args{separator},
+	    quote       => $args{quote},
+	    binary      => 1, 
+	    auto_diag   => 1,
 	    decode_utf8 => 1,
 	}
 	);
@@ -269,12 +315,13 @@ sub _parse_csv {
     $csv->column_names (@cols);
 
     my @rows;
-    while (my $row = $csv->getline_hr ($fh)) {
+    while (my $row = $csv->getline_hr($fh)) {
 	push @rows, $row;
     }
     
     close $fh;
-    return \@rows;
+
+    return @rows;
 } 
 
 1;
