@@ -37,6 +37,18 @@ sub show_error {
     say STDERR "ERROR: $text";
 }
 
+sub run_if_tags {
+    my $self = shift;
+
+    return %{$self->{args}->{run_if_tags} // {}}
+}
+
+sub run_if_not_tags {
+    my $self = shift;
+
+    return %{$self->{args}->{run_if_not_tags} // {}}
+}
+
 sub state_dump {
     my $self = shift;
 

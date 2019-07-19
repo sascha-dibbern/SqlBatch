@@ -9,23 +9,23 @@ use lib qw(../lib);
 
 use Carp;
 use Test::More;
-use SqlBatch::PlanTagFilter;
 use Data::Dumper;
+use SqlBatch::InstructionBase;
+use SqlBatch::PlanTagFilter;
+require_ok('SqlBatch::PlanTagFilter');
 
-my $instruction1 = {
-    run_if_tags => {
-	tag => 1,
-    },
-};
-my $instruction2 = {
-    run_if_not_tags  => {
-	not_tag => 1,
-    },
-};
+my $instruction1=SqlBatch::InstructionBase->new(
+    undef,undef,
+    run_if_tags => { tag => 1 },
+);
+
+my $instruction2=SqlBatch::InstructionBase->new(
+    undef,undef,
+    run_if_not_tags => { not_tag => 1 },
+);
 
 my $filter0 = SqlBatch::PlanTagFilter->new();
 #say Dumper($filter0);
-
 ok(! $filter0->is_allowed_instruction($instruction1),"No tags vs. run-if => disallowed");
 ok($filter0->is_allowed_instruction($instruction2),"No tags vs. run-not-if  => allowed");
 
