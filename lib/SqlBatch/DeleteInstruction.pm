@@ -29,7 +29,7 @@ sub run {
 
     my $field_values = $instruction->{data};
     my @fields       = sort keys %$field_values;
-    my $sth_ph       = $self->{_sth_placeholder);
+    my $sth_ph       = $self->{_sth_placeholder};
     my $sth          = ${$sth_ph};
 
     unless (defined $sth) {

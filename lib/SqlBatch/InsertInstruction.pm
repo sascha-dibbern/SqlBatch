@@ -27,7 +27,7 @@ sub run {
 
     my $field_values = $self->content;
     my @fields       = sort keys %$field_values;
-    my $sth_ph       = $self->{_sth_placeholder);
+    my $sth_ph       = $self->{_sth_placeholder};
     my $sth          = ${$sth_ph};
 
     unless (defined $sth) {
@@ -45,7 +45,7 @@ sub run {
 
     my @values = @{$field_values}{@fields};
     eval {
-	$rv = $sth->execute(@values);
+	my $rv = $sth->execute(@values);
 	$self->runstate(_returnvalue=>$rv);
     };
     if ($@) {

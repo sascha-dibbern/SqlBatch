@@ -12,9 +12,9 @@ use parent 'SqlBatch::InstructionBase';
 use Data::Dumper;
 
 sub new {
-    my ($class,$config,%args) = @_;
+    my ($class,$config,$content,%args) = @_;
 
-    my $self = SqlBatch::InstructionBase->new($config,%args);
+    my $self = SqlBatch::InstructionBase->new($config,$content,%args);
 
     $self = bless $self, $class;
     return $self;    

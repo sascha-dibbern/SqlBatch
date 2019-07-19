@@ -14,7 +14,7 @@ use Data::Dumper;
 sub new {
     my ($class,$config,%args) = @_;
 
-    my $self = SqlBatch::InstructionBase->new($config,%args);
+    my $self = SqlBatch::InstructionBase->new($config,"",%args);
 
     $self = bless $self, $class;
     return $self;    
