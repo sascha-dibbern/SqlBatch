@@ -27,10 +27,10 @@ sub run {
 
     eval {
 	my $rv = $self->databasehandle->do($sql);
-	$self->runstate(_returnvalue=>$rv);
+	$self->runstate->_returnvalue($rv);
     };
     if($@) {
-	$self->runstate(_error=>$@);
+	$self->runstate->_error($@);
 	self->show_error("Failed running instruction: ".Dumper($self->state_dump));
 	croak($@);
     }

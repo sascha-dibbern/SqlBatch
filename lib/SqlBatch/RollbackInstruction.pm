@@ -30,14 +30,14 @@ sub run {
     } else {
 	eval {
 	    my $rv = $self->databasehandle->rollback;
-	    $self->runstate(_returnvalue => $rv);
+	    $self->runstate->_returnvalue($rv);
 	};
 	if($@) {
-	    $self->runstate(_error => $@);
+	    $self->runstate->_error($@);
 	    self->show_error("Failed running instruction: ".Dumper($self->state_dump));
 	    croak($@);
 	}
-	$self->runstate(autocommit => 1);
+	$self->runstate->autocommit(1);
     }
 
 }

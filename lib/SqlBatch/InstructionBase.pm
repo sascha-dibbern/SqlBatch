@@ -69,21 +69,29 @@ sub argument {
     return $self->{arguments}->{$name};
 }
 
+sub address {
+    my $self = shift;
+    my $new = shift;
+    if (defined $new) {
+	$self->{address} = $new;
+    }
+    return $self->{address};
+}
+
 sub content {
     my $self = shift;
     return $self->{content};
 }
 
 sub runstate {
-    my $self  = shift;
-    my $key   = shift;
-    my $value = shift;
+    my $self = shift;
+    my $new  = shift;
 
-    if (defined $key) {
-	%{$self->{runstate}} = (%{$self->{runstate}}, $key => $value);
+    if (defined $new) {
+	%$self->{runstate} = $new;
     } 
     
-    return %{$self->{runstate}};
+    return $self->{runstate};
 }
 
 sub databasehandle {

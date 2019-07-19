@@ -46,10 +46,10 @@ sub run {
     my @values = @{$field_values}{@fields};
     eval {
 	my $rv = $sth->execute(@values);
-	$self->runstate(_returnvalue=>$rv);
+	$self->runstate->_returnvalue($rv);
     };
     if ($@) {
-	$self->runstate(_error=>$@);
+	$self->runstate->_error($@);
 	self->show_error("Failed running instruction: ".Dumper($self));
 	croak($@);
     }
