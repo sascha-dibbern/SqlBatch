@@ -9,10 +9,36 @@ use lib qw(../lib);
 
 use Carp;
 use Test::More;
-use SqlBatch::PlanReader;
+
+use SqlBatch::SqlInstruction;
+
+require_ok('SqlBatch::AbstractPlan');
+require_ok('SqlBatch::InstructionBase');
+require_ok('SqlBatch::SqlInstruction');
+require_ok('SqlBatch::InsertInstruction');
+require_ok('SqlBatch::DeleteInstruction');
+require_ok('SqlBatch::BeginInstruction');
+require_ok('SqlBatch::CommitInstruction');
+require_ok('SqlBatch::RollbackInstruction');
+
+require_ok('SqlBatch::PlanReader');
+
 use Data::Dumper;
 
-my $reader = SqlBatch::PlanReader->new(undef,undef);
+package Testplan;
+
+use parent "SqlBatch::AbstractPlan";
+
+our @instructions;
+
+sub add_instructions {
+    my $self         = shift;
+
+    push @instructions,@_;
+}
+
+package main;
+
 my $file1  =<<'FILE1';
 # Comment
 undefined line
@@ -23,21 +49,30 @@ blabla
 --INSERT-- --id=insert1
 'a';'b'
 '1';'2'
+'3';'4'
 --END--
 
---SQL-- --id=sql2
+--SQL-- --id=sql2 --tags=tag1,-tag2
 blabla
 --END--
 
---DELETE-- --id==delete1
+--DELETE-- --id=delete1
 'a';'b'
 '1';'2'
+'3';'4'
 --END--
 FILE1
+;
 
-$reader->files(\$file1);
-my @ep = $reader->execution_plan;
-ok(scalar(@ep)==4,"Correct number of instructions");
-#say Dumper(\@ep);
+my $plan1 = Testplan->new();
+my $reader1 = SqlBatch::PlanReader->new(undef,$plan1,"config");
+$reader1->files(\$file1);
 
-done_testing;
+eval { $reader1->load };
+ok(!$@,"Load plan without errors");
+say $@ if $@;
+
+ok(scalar(@Testplan::instructions)==6,"Correct number of instructions");
+say Dumper(\@Testplan::instructions) unless scalar(@Testplan::instructions)==6;
+
+done_testing();
