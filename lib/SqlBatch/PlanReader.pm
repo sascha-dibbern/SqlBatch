@@ -9,7 +9,14 @@ use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Data::Dumper;
 use Text::CSV_XS;
-use SqlBatch::Plan;
+use SqlBatch::AbstractPlan;
+use SqlBatch::BeginInstruction;
+use SqlBatch::CommitInstruction;
+use SqlBatch::RollbackInstruction;
+use SqlBatch::SqlInstruction;
+use SqlBatch::InsertInstruction;
+use SqlBatch::DeleteInstruction;
+
 
 sub new {
     my ($class, $directory, $plan, $config)=@_;
@@ -39,7 +46,7 @@ sub load {
 sub files {
     my $self = shift;
 
-    my @override= @_;
+    my @override = @_;
     if (scalar(@override)) {
 	$self->{files} = \@override;
     }
@@ -47,11 +54,11 @@ sub files {
     my $config = $self->{config};
 
     unless (defined $self->{files}) {
-	my $from_file     = $config->item(from_file);
-	my $to_file       = $config->item(to_file);
-	my $exclude_files = $config->item(exclude_files);
+	my $from_file     = $config->item('from_file');
+	my $to_file       = $config->item('to_file');
+	my $exclude_files = $config->item('exclude_files');
 	my %exclusions    = map { $_ => 1 } @$exclude_files;
-	my $dir           = $config->item(directory);
+	my $dir           = $config->item('directory');
 	
 	opendir(my $dh, $dir) || croak "Can't opendir $dir: $!";
 	my @all_files = sort grep { -f "$dir/$_" } readdir($dh);
@@ -109,9 +116,16 @@ sub load_tasks_file_instructions {
 	    file    => $current_file,
 	    line_nr => $line_nr,	
 	    );
+
 	if ($line =~ /^--SQL--/) {
- 	    %args          = (%args,$self->_parse_section_args("--SQL--",$line));
+	    eval {
+		%args = (%args,$self->_parse_section_args("--SQL--",$line));
+	    };
+	    if ($@) {
+		croak "SQL-section arguments failed in file $current_file (line: $line_nr): $@";
+	    }
 	    @instructions  = $self->_sql_instruction(%args);
+
 	} elsif ($line =~ /^--INSERT--/) {
 	    my $table;
 	    eval {
@@ -120,12 +134,13 @@ sub load_tasks_file_instructions {
 			     $line,
 			     "table=s"=>\$table,
 			 ));
-	    }
+	    };
 	    if ($@) {
-		croak "INSERT-section needs --table argument: $@";
+		croak "INSERT-section arguments failed in file $current_file (line: $line_nr): $@";
 	    }
 	    $args{table}   = $table;
 	    @instructions  = $self->_insert_csv_instructions(%args);
+
 	} elsif ($line =~ /^--DELETE--/) {
 	    my $table;
 	    eval {
@@ -134,41 +149,67 @@ sub load_tasks_file_instructions {
 			     $line,
 			     "table=s"=>\$table,
 			 ));
-	    }
+	    };
 	    if ($@) {
-		croak "DELETE-section needs --table argument: $@";
+		croak "DELETE-section arguments failed in file $current_file (line: $line_nr): $@";
 	    }
 	    $args{table}   = $table;
 	    @instructions  = $self->_delete_csv_instructions(%args);
+
 	} elsif ($line =~ /^--BEGIN--/) {
 	    @instructions = (
-		{
-		    %args,
-		    type => "BEGIN",
-		}
+		SqlBatch::BeginInstruction->new(
+		    $self->{config},
+		    %args
+		)
 		);
+
 	} elsif ($line =~ /^--COMMIT--/) {
 	    @instructions = (
-		{
-		    %args,
-		    type => "COMMIT",
-		}
+		SqlBatch::CommitInstruction->new(
+		    $self->{config},
+		    %args
+		)
 		);
+
 	} elsif ($line =~ /^--ROLLBACK--/) {
 	    @instructions = (
-		{
-		    %args,
-		    type => "ROLLBACK",
-		}
+		SqlBatch::RollbackInstruction->new(
+		    $self->{config},
+		    %args
+		)
 		);
+	    
+	} elsif ($line =~ /^--PERL--/) {
+	    my $class;
+
+	    eval {
+		%args = (%args,$self->_parse_section_args(
+			     "--PERL--",
+			     $line,
+			     "class=s"=>\$class,
+			 ));
+	    };
+	    if ($@) {
+		croak "PERL-section arguments failed in file $current_file (line: $line_nr): $@";
+	    }
+
+	    my $content   = $self->_read_content_section_string(\@lines,%args);
+	    require $class;	    
+	    @instructions = (
+		$class->new(
+		    $self->{config},
+		    $content,
+		    %args
+		)
+		);
+
 	} else {
 	    say "Ignored line with content: $line";
 	    next;
 	}
 
-	$instruction{origin_file} = $current_file;
-	push @sequence,@instruction;
-
+	push @sequence,@instructions;
 	$line_nr++;
     }
 
@@ -179,7 +220,7 @@ sub _parse_section_args {
     my $self       = shift;
     my $section    = shift;
     my $line       = shift;
-    my @extra_args = @_;
+    my %extra_args = @_;
 
     chomp $line;
     $line =~ /$section(.*)/;
@@ -209,7 +250,7 @@ sub _parse_section_args {
 	my $tag = $_;
 	$tag =~ s/^-//;
 	$tag => 1 
-    } grep { ! /^-/ } @tags;
+    } grep { /^-/ } @tags;
 
     my %args = (
 	id               => $id,
@@ -237,11 +278,11 @@ sub _sql_instruction {
 	push @sqllines,$line;
     }
 
-    return {
+    return SqlBatch::SqlInstruction->new (
+	$self->{config},
+	join("\n",@sqllines),
 	%args,
-	type => "SQL",
-	sql  => join("\n",@sqllines),
-    };    
+    );    
 
 }
 
@@ -252,14 +293,13 @@ sub _insert_csv_instructions {
     my $sth_placeholder = undef;
     my $lines           = $self->{lines_to_parse};
     my @instructions    = map {
-	my %data = (
+	SqlBatch::InsertInstruction->new(
+	    $self->{config},
+	    $_,
+	    \$sth_placeholder,
 	    %args,
-	    type            => "INSERT",
-	    data            => $_,
-	    sth_placeholder => \$sth_placeholder,
 	    );
-	\%data
-    } $self->_parse_csv($lines,%args);
+    } ($self->_parse_csv($lines,%args));
 
     return @instructions;
 }
@@ -272,16 +312,32 @@ sub _delete_csv_instructions {
     my $lines = $self->{lines_to_parse};
 
     my @instructions = map {
-	my %data = (
+	SqlBatch::DeleteInstruction->new(
+	    $self->{config},
+	    $_,
+	    \$sth_placeholder,
 	    %args,
-	    type            => "DELETE",
-	    data            => $_,
-	    sth_placeholder => \$sth_placeholder,
 	    );
-	\%data
-    } $self->_parse_csv($lines,%args);
+    } ($self->_parse_csv($lines,%args));
 
     return @instructions;
+}
+
+sub _read_content_section_string {
+    my $self  = shift;
+    my $lines = shift;
+    my %args  = @_;
+
+    my $end = $args{end};
+    my @resultlines;
+    while (my $line = shift @$lines) {
+	last if ($line =~ /^$end/);
+
+	# Add line to SQL-statement
+	push @resultlines,$line;
+    }
+
+    return join("",@resultlines);
 }
 
 sub _parse_csv {
@@ -289,16 +345,7 @@ sub _parse_csv {
     my $lines = shift;
     my %args  = @_;
 
-    my $end = $args{end};
-    my @csvlines;
-    while (my $line = shift @$lines) {
-	last if ($line =~ /^$end/);
-
-	# Add line to SQL-statement
-	push @csvlines,$line;
-    }
-
-    my $string = join("",@csvlines);
+    my $string = $self->_read_content_section_string($lines,%args);
     open my $fh, "<:encoding(utf8)", \$string;
 
     # Read/parse CSV    
