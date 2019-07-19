@@ -257,7 +257,7 @@ sub _parse_section_args {
 	separator        => $separator,
 	quotes           => $quote,
 	end              => $end,
-	run_only_if_tags => \%pos_tags,
+	run_if_tags      => \%pos_tags,
 	run_not_if_tags  => \%neg_tags,
     );
 
