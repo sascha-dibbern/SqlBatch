@@ -16,33 +16,39 @@ sub new {
     my ($class, @argv)=@_;
 
     my $configfile;
-    my $directory=".";
-    my $configfile;
+    my $directory     = ".";
     my $datasource;
     my $username;
     my $password;
-    my $dryrun;
-    my $tags;
+#    my $dryrun;
+    my $tags          = "";
     my $from_file;
     my $to_file;
     my $exclude_files;
+    my $fileextension = "sb";
+    my $verbosity     = 0;
 
     GetOptionsFromArray (
-	$argv,
+	\@argv,
 	"configfile:s"      => \$configfile,
 	"directory:s"       => \$directory,
 	"datasource:s"      => \$datasource,
 	"username:s"        => \$username,
 	"password:s"        => \$password,
-	"dryrun"            => \$dryrun,
+#	"dryrun"            => \$dryrun,
 	"tags:s"            => \$tags,
 	"from_file:s"       => \$from_file,
 	"to_file:s"         => \$to_file,
 	"exclude_files:s"   => \$exclude_files,	    
-	) if (defined $argv);
+	"fileextension:s"   => \$fileextension,	    
+	"verbosity:i"       => \$verbosity,
+# Future features
+#	"from_id:s"         => \$from_id,
+#	"to_id:s"           => \$to_id,
+	) if (scalar(@argv));
 
-    my @tags          = split /,/ $tags;
-    my @exclude_files = split /,/ $exclude_files;
+    my @tags          = split /,/,$tags;
+    my @exclude_files = split /,/,$exclude_files;
 
     my $config = SqlBatch::Configuration(
 	$configfile,
@@ -50,11 +56,13 @@ sub new {
 	username         => $username,
 	password         => $password,
 	directory        => $directory,
-	dryrun           => $dry_run,
-	tags_only        => \@tags_only // [],
+#	dryrun           => $dry_run,
+	tags             => \@tags // [],
 	from_file        => $from_file,
 	to_files         => $to_file,
-	exclude_files    => \@excldue_files // [],
+	exclude_files    => \@exclude_files // [],
+	fileextension    => $fileextension,
+	verbosity        => $verbosity,
 	);
     $config->load;
 
@@ -86,10 +94,10 @@ sub run {
     my $reader = SqlBatch::PlanReader->new(
 	$dir,
 	$plan,
-	$config->items_hash(),
+	$config,
 	);
 
-    my $plan   = $reader->execution_plan());
+    $plan->run();
 }
 
 1;
