@@ -17,7 +17,8 @@ my $file1  =<<'FILE1';
 {
     "datasource" : "DBI:RAM:",
     "username" : "user",
-    "password" : "pw"
+    "password" : "pw",
+    "force_autocommit" : 1
 }
 FILE1
     ;
@@ -30,9 +31,10 @@ ok(!$@,"Configuration loaded and validated");
 say $@;
 ok($conf1->item('username') eq 'user',"Retrieve item");
 my %h = $conf1->items_hash;
-ok(scalar(keys %h) == 3,"Item hash");
+ok(scalar(keys %h) == 4,"Item hash");
 
-my $dbh = $conf1->database_handle;
-ok($dbh,"Database handle");
+my $dbhs = $conf1->database_handles;
+ok($dbhs->{autocommitted},"Database handles (autocommitted)");
+ok($dbhs->{nonautocommitted},"Database handles (nonautocommitted)");
 
 done_testing;
