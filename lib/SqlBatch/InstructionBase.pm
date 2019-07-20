@@ -88,7 +88,7 @@ sub runstate {
     my $new  = shift;
 
     if (defined $new) {
-	%$self->{runstate} = $new;
+	$self->{runstate} = $new;
     } 
     
     return $self->{runstate};
