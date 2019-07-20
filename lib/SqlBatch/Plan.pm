@@ -17,7 +17,7 @@ sub new {
 	configuration => $config,	
 	filters       => [],
 	instructions  => [],
-	run_state     => SqlBatch::RunState->new();,
+	run_state     => SqlBatch::RunState->new(),
     );
 
     return bless $self, $class;
@@ -62,7 +62,7 @@ sub run {
 
     $self->{runstate} = SqlBatch::RunState->new();
 
-    my $instructions_count = scalar(@{$self->{instructions}};
+    my $instructions_count = scalar(@{$self->{instructions}});
     $self->{former_instruction_address}  = 0;
     $self->{current_instruction_address} = 0;
     
