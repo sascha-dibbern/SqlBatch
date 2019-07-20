@@ -61,8 +61,11 @@ sub files {
 	my $dir           = $config->item('directory');
 	
 	opendir(my $dh, $dir) || croak "Can't opendir $dir: $!";
-	my @all_files = sort grep { -f "$dir/$_" } readdir($dh);
+	my @all_files          = sort grep { -f "$dir/$_" } readdir($dh);
+	my $fileextension      = $config->item('fileextension');
+	my @all_sqlbatch_files = grep { /\.$fileextension$/ } @all_files;
 	closedir $dh;
+	
 	
 	my $check_for_first = defined $from_file ? 0 : 1;
 	my $check_for_last  = defined $to_file   ? 0 : 1;
@@ -84,7 +87,7 @@ sub files {
 		$addfile = 0;
 	    }
 	    $addfile
-	} @all_files;
+	} @all_sqlbatch_files;
 	
 	my @paths      = map { $dir.'/'.$_ } @files;
 	$self->{files} = \@paths;
