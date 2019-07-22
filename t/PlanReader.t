@@ -52,7 +52,7 @@ blabla
 '3';'4'
 --END--
 
---SQL-- --id=sql2 --tags=tag1,-tag2
+--SQL-- --id=sql2 --tags=tag1,!tag2
 blabla
 --END--
 
