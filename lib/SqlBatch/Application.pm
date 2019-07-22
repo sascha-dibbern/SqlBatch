@@ -26,7 +26,7 @@ sub new {
     my $to_file;
     my $exclude_files;
     my $fileextension = "sb";
-    my $verbosity     = 0;
+    my $verbosity     = 1;
 
     GetOptionsFromArray (
 	\@argv,
@@ -49,6 +49,15 @@ sub new {
 
     my @tags          = split /,/,$tags;
     my @exclude_files = split /,/,$exclude_files;
+
+    if ( $configfile eq '-') {
+	if (-e './sb.conf') {
+	    $configfile = './sb.conf'
+	} 
+	elsif (-e "$directory/sb.conf") {
+	    $configfile = "$directory/sb.conf";
+	}
+    }
 
     my $config = SqlBatch::Configuration(
 	$configfile,
