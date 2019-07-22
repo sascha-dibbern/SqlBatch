@@ -1,5 +1,7 @@
 package SqlBatch::PlanTagFilter;
 
+# ABSTRACT: Class to filter out instructions according to their matching against given tags
+
 use v5.16;
 use strict;
 use warnings;

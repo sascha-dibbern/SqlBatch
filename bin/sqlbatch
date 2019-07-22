@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# ABSTRACT: sqlbatch - Application code
+
 use v5.16;
 use strict;
 use warnings;

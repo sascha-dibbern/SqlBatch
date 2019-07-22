@@ -1,4 +1,6 @@
-package SqlBatch::Application;
+package SqlBatch::Engine;
+
+# ABSTRACT: Class for engine object
 
 use v5.16;
 use strict;

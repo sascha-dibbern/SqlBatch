@@ -1,5 +1,7 @@
 package SqlBatch::Plan;
 
+# ABSTRACT: Class for execution plan
+
 use v5.16;
 use strict;
 use warnings;

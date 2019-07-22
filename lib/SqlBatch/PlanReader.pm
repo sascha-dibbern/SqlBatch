@@ -1,5 +1,7 @@
 package SqlBatch::PlanReader;
 
+# ABSTRACT: Class reading an instruction plan
+
 use v5.16;
 use strict;
 use warnings;

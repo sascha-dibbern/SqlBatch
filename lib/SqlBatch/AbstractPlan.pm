@@ -1,5 +1,7 @@
 package SqlBatch::AbstractPlan;
 
+# ABSTRACT: Abstract class for a plan object 
+
 use v5.16;
 use strict;
 use warnings;
@@ -17,7 +19,7 @@ sub new {
 }
 
 sub add_instructions {
-    my $self         = shift;
+    my $self = shift;
 
     croak "Abstract methode";
 }
