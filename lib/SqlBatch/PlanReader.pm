@@ -208,7 +208,7 @@ sub load_tasks_file_instructions {
 		);
 
 	} else {
-	    say "Ignored line with content: $line";
+	    say "Ignored line ($current_file;$line_nr) with content: $line";
 	    next;
 	}
 
@@ -248,7 +248,7 @@ sub _parse_section_args {
 
     $end         = '--'.$end.'--';
     my @tags     = split /,/,$tags;
-    my %pos_tags = map { $_ => 1 } grep { ! /^-/ } @tags;
+    my %pos_tags = map { $_ => 1 } grep { ! /^!/ } @tags;
     my %neg_tags = map { 
 	my $tag = $_;
 	$tag =~ s/^-//;
@@ -274,7 +274,7 @@ sub _sql_instruction {
     my $lines = $self->{lines_to_parse};
     my @sqllines;
     while (my $line = shift @$lines) {
-	say $line;
+#	say $line;
 	last if ($line =~/^$args{end}/);
 
 	# Add line to SQL-statement
