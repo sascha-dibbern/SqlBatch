@@ -39,7 +39,10 @@ sub load {
     my $plan       = $self->{plan};
     my @file_paths = $self->files;
 
+    my $verbosity = $self->{config}->verbosity;
     for my $current_file (@file_paths) {
+	say "Load batchfile: ".$current_file if ($verbosity > 1);
+
 	$self->{current_file} = $current_file;
 	$plan->add_instructions($self->load_tasks_file_instructions);
     }
@@ -56,8 +59,8 @@ sub files {
     my $config = $self->{config};
 
     unless (defined $self->{files}) {
-	my $from_file     = $config->item('from_file');
-	my $to_file       = $config->item('to_file');
+	my $from_file     = $config->item('from_file') // "";
+	my $to_file       = $config->item('to_file') // "";
 	my $exclude_files = $config->item('exclude_files');
 	my %exclusions    = map { $_ => 1 } @$exclude_files;
 	my $dir           = $config->item('directory');
@@ -94,7 +97,6 @@ sub files {
 	my @paths      = map { $dir.'/'.$_ } @files;
 	$self->{files} = \@paths;
     }
-
     return wantarray ? @{$self->{files} } : $self->{files} ;
 }
 
@@ -102,7 +104,7 @@ sub load_tasks_file_instructions {
     my $self         = shift;
     my $current_file = shift // $self->{current_file};
 
-    open(FH,"<",$current_file) || croak "File $current_file could not be openned";
+    open(FH,"<:encoding(utf8)",$current_file) || croak "File $current_file could not be openned";
     my @alllines = <FH>;
     close FH;
 
@@ -217,7 +219,6 @@ sub load_tasks_file_instructions {
 	push @sequence,@instructions;
 	$line_nr++;
     }
-
     return @sequence;
 }
 
@@ -253,14 +254,14 @@ sub _parse_section_args {
     my %pos_tags = map { $_ => 1 } grep { ! /^!/ } @tags;
     my %neg_tags = map { 
 	my $tag = $_;
-	$tag =~ s/^-//;
+	$tag =~ s/^!//;
 	$tag => 1 
-    } grep { /^-/ } @tags;
+    } grep { /^!/ } @tags;
 
     my %args = (
 	id               => $id,
 	separator        => $separator,
-	quotes           => $quote,
+	quote            => $quote,
 	end              => $end,
 	run_if_tags      => \%pos_tags,
 	run_not_if_tags  => \%neg_tags,
@@ -364,10 +365,11 @@ sub _parse_csv {
 	}
 	);
     my @cols = @{$csv->getline ($fh)};
-    $csv->column_names (@cols);
+    $csv->column_names(@cols);
 
     my @rows;
     while (my $row = $csv->getline_hr($fh)) {
+#	say Dumper($row);
 	push @rows, $row;
     }
     

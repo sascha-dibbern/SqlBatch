@@ -28,7 +28,6 @@ sub new {
 	    datasource          => 1,
 	    username            => 1,
 	    password            => 1,
-	    database_attributes => 0,
 	},
     };
 
@@ -46,12 +45,11 @@ sub load {
     my $path = $self->{config_file_path};
 
     unless (ref($path)) {
-	croak "Configuration file $path not found" 
+	croak "Configuration file '$path' not found" 
 	    unless -e $path;
     }
 
     $self->{loaded} = json_file_to_perl($path);
-
 }
 
 sub requirement_assertion {
@@ -71,6 +69,11 @@ sub validate {
     my %h     = $self->items_hash();
     my @hkeys = keys %h;
     map {$self->requirement_assertion($_) } @hkeys;
+}
+
+sub verbosity {
+    my $self = shift;
+    return $self->item('verbosity') // 0;
 }
 
 sub item {

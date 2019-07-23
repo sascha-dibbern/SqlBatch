@@ -34,7 +34,7 @@ sub run {
 	};
 	if($@) {
 	    $self->runstate->_error($@);
-	    self->show_error("Failed running instruction: ".Dumper($self->state_dump));
+	    $self->show_error("Failed running instruction: ".Dumper($self->state_dump));
 	    croak($@);
 	}
 	$self->runstate->autocommit(1);

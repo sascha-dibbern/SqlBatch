@@ -197,7 +197,7 @@ Comma separated list for matching tags to execute the instruction og non-matchin
     create table t (a int,b varchar)
     --END--
     an undefined line outside a section
-    --INSERT-- -id=fill_table_t -table=t -id=insert1
+    --INSERT-- -id=fill_table_t -table=t
     'a';'b'
     '1';'2'
     '3';'4'

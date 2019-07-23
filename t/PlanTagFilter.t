@@ -31,11 +31,11 @@ ok($filter0->is_allowed_instruction($instruction2),"No tags vs. run-not-if  => a
 
 my $filter1 = SqlBatch::PlanTagFilter->new('tag');
 ok($filter1->is_allowed_instruction($instruction1),"tag vs. run-if => allowed");
-ok($filter1->is_allowed_instruction($instruction2),"tag vs. run-not-if  => allowed");
+ok(!$filter1->is_allowed_instruction($instruction2),"tag vs. run-not-if  => disallowed");
 
 
 my $filter2 = SqlBatch::PlanTagFilter->new('not_tag');
-ok($filter2->is_allowed_instruction($instruction1),"not_tag vs. run-if => allowed");
+ok(! $filter2->is_allowed_instruction($instruction1),"not_tag vs. run-if => allowed");
 ok(! $filter2->is_allowed_instruction($instruction2),"not_tag vs. run-not-if  => disallowed");
 
 done_testing;

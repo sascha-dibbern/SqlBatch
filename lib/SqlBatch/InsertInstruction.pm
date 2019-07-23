@@ -25,19 +25,23 @@ sub new {
 sub run {
     my $self = shift;
 
+    my $verbosity    = $self->configuration->verbosity;
     my $field_values = $self->content;
     my @fields       = sort keys %$field_values;
     my $sth_ph       = $self->{_sth_placeholder};
     my $sth          = ${$sth_ph};
 
     unless (defined $sth) {
-	my $table = $self->arguments('table');
+	my $table = $self->argument('table');
+
 	my $sql   = sprintf(
 	    "insert into %s (%s) values (%s)",
 	    $table, 
 	    join(",", @fields), 
 	    join(",", ("?")x@fields)
 	    );
+
+	say "Run insert-sql pattern: ".$sql if $verbosity > 1;
 
 	$sth       = $self->databasehandle->prepare($sql);	    
 	${$sth_ph} = $sth;

@@ -17,16 +17,15 @@ use SqlBatch::Plan;
 sub new {
     my ($class, @argv)=@_;
 
-    my $configfile;
+    my $configfile    = ""; # No configfile is default
     my $directory     = ".";
     my $datasource;
     my $username;
     my $password;
-#    my $dryrun;
     my $tags          = "";
     my $from_file;
     my $to_file;
-    my $exclude_files;
+    my $exclude_files = "";
     my $fileextension = "sb";
     my $verbosity     = 1;
 
@@ -37,7 +36,6 @@ sub new {
 	"datasource:s"      => \$datasource,
 	"username:s"        => \$username,
 	"password:s"        => \$password,
-#	"dryrun"            => \$dryrun,
 	"tags:s"            => \$tags,
 	"from_file:s"       => \$from_file,
 	"to_file:s"         => \$to_file,
@@ -45,12 +43,24 @@ sub new {
 	"fileextension:s"   => \$fileextension,	    
 	"verbosity:i"       => \$verbosity,
 # Future features
+#	"dryrun"            => \$dryrun,
 #	"from_id:s"         => \$from_id,
 #	"to_id:s"           => \$to_id,
 	) if (scalar(@argv));
 
-    my @tags          = split /,/,$tags;
-    my @exclude_files = split /,/,$exclude_files;
+    my %overrides;
+    $overrides{directory}       = $directory  if defined $directory;
+    $overrides{datasource}      = $datasource if defined $datasource;
+    $overrides{username}        = $username   if defined $username;
+    $overrides{password}        = $password   if defined $password;
+    my @tags                    = split /,/,$tags;
+    $overrides{tags}            = \@tags      if scalar (@tags);
+    $overrides{from_file}       = $from_file  if defined $from_file;
+    $overrides{to_file}         = $to_file    if defined $to_file;
+    my @exclude_files           = split /,/,$exclude_files;
+    $overrides{exclude_files}   = \@exclude_files if scalar (@exclude_files);
+    $overrides{fileextension}   = $fileextension if defined $fileextension;
+    $overrides{verbosity}       = $verbosity if defined $verbosity;
 
     if ( $configfile eq '-') {
 	if (-e './sb.conf') {
@@ -61,21 +71,10 @@ sub new {
 	}
     }
 
-    my $config = SqlBatch::Configuration(
+    my $config = SqlBatch::Configuration->new(
 	$configfile,
-	datasource       => $datasource,
-	username         => $username,
-	password         => $password,
-	directory        => $directory,
-#	dryrun           => $dry_run,
-	tags             => \@tags // [],
-	from_file        => $from_file,
-	to_files         => $to_file,
-	exclude_files    => \@exclude_files // [],
-	fileextension    => $fileextension,
-	verbosity        => $verbosity,
+	%overrides,
 	);
-    $config->load;
 
     my $self   = {
 	config => $config,
@@ -94,20 +93,31 @@ sub config {
     return $self->{config};
 }
 
+sub plan {
+    my $self = shift;
+    unless (defined $self->{plan}) {
+	$self->{plan} = SqlBatch::Plan->new($self->config());
+    }
+    return $self->{plan};
+}
+
 sub run {
     my $self = shift;
 
     my $config = $self->config();
     my $dir    = $config->item('directory');
-    my $plan   = SqlBatch::Plan->new($config);
-    my $filter = SqlBatch::PlanTagFilter->new(@{$config->item('tags')});    
+    my $plan   = $self->plan;
+
+    my $filter = SqlBatch::PlanTagFilter->new(@{$config->item('tags') // []});    
     $plan->add_filter($filter);
+
     my $reader = SqlBatch::PlanReader->new(
 	$dir,
 	$plan,
 	$config,
 	);
-
+    $reader->load;
+#    say Dumper($plan);
     $plan->run();
 }
 

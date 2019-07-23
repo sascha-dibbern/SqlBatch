@@ -23,9 +23,13 @@ sub new {
 sub run {
     my $self = shift;
 
-    my $sql = $self->content;
-
+    my $verbosity = $self->configuration->verbosity;
+    my $sql       = $self->content;
+    
     eval {
+	chomp $sql;
+	say "Run sql: ".$sql if $verbosity > 1;
+
 	my $rv = $self->databasehandle->do($sql);
 	$self->runstate->_returnvalue($rv);
     };

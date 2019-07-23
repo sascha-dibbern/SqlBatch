@@ -13,13 +13,14 @@ use SqlBatch::RunState;
 use parent "SqlBatch::AbstractPlan";
 
 sub new {
-    my ($class,$config)=@_;
+    my $class  = shift;
+    my $config = shift // croak("No configuration given");
 
     my $self = SqlBatch::AbstractPlan->new(
-	configuration => $config,	
+	$config,	
 	filters       => [],
 	instructions  => [],
-	run_state     => SqlBatch::RunState->new(),
+	runstate     => SqlBatch::RunState->new(),
     );
 
     return bless $self, $class;
@@ -103,7 +104,7 @@ sub run {
 sub current_databasehandle {
     my $self = shift;
 
-    my $dbhs = $self->{configuration}->database_handles;
+    my $dbhs = $self->configuration->database_handles;
     my $mode = $self->{runstate}->commit_mode();
 
     return $dbhs->{$mode};

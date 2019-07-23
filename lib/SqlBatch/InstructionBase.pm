@@ -14,7 +14,7 @@ sub new {
 
     my $self = {
 	_configuration => $config,
-	args           => \%args,
+	arguments      => \%args,
 	content        => $content,
 	runstate       => {},
    };
@@ -40,13 +40,13 @@ sub show_error {
 sub run_if_tags {
     my $self = shift;
 
-    return %{$self->{args}->{run_if_tags} // {}}
+    return %{$self->{arguments}->{run_if_tags} // {}}
 }
 
-sub run_if_not_tags {
+sub run_not_if_tags {
     my $self = shift;
 
-    return %{$self->{args}->{run_if_not_tags} // {}}
+    return %{$self->{arguments}->{run_not_if_tags} // {}}
 }
 
 sub state_dump {
@@ -58,7 +58,7 @@ sub state_dump {
     return \%public;  
 }
 
-sub config {
+sub configuration {
     my $self = shift;
     return $self->{_configuration};
 }

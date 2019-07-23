@@ -23,24 +23,26 @@ sub new {
 }
 
 sub run {
-    my $self        = shift;
-    my $dbh         = shift;
-    my $instruction = shift;
-
-    my $field_values = $instruction->{data};
+    my $self = shift;
+    
+    my $verbosity    = $self->configuration->verbosity;
+    my $field_values = $self->content;
     my @fields       = sort keys %$field_values;
     my $sth_ph       = $self->{_sth_placeholder};
     my $sth          = ${$sth_ph};
 
     unless (defined $sth) {
-	my $table = $self->arguments('table');
-	my @constraints = map { "$_=?" } @fields;
+	my $table = $self->argument('table');
+	my @constraints = map { $_."=?" } @fields;
 
 	my $sql   = sprintf(
 	    "delete from %s where %s",
 	    $table,
 	    join(' and ',@constraints)
 	    );
+
+	say "Run delete-sql pattern: ".$sql if $verbosity > 1;
+
 	$sth = $self->databasehandle->prepare($sql);	    
 	${$sth_ph} = $sth;
     }
@@ -52,7 +54,7 @@ sub run {
     };
     if ($@) {
 	$self->runstate->_error($@);
-	self->show_error("Failed running instruction: ".Dumper($self));
+	$self->show_error("Failed running instruction: ".Dumper($self));
 	croak($@);
     }
 }

@@ -13,9 +13,17 @@ use Data::Dumper;
 sub new {
     my ($class,$config,%defaults)=@_;
 
-    my $self = \%defaults;
+    my $self = { 
+	%defaults,
+	configuration => $config,
+    };
 
     return bless $self, $class;
+}
+
+sub configuration {
+    my $self = shift;
+    return $self->{configuration};
 }
 
 sub add_instructions {
