@@ -33,20 +33,14 @@ sub is_allowed_instruction {
     my $self        = shift;
     my $instruction = shift;
 
-#    say Dumper($self->{tags});
     my %run_if_tags     = $instruction->run_if_tags;
     my %run_not_if_tags = $instruction->run_not_if_tags;
-
-#    say Dumper(\%run_if_tags);
-#    say Dumper(\%run_not_if_tags);
 
     if ($self->{no_tags_defined}) {
 	my @run_if_tags = keys %run_if_tags;
 	if (scalar(@run_if_tags) == 0) {
-#   say "#1";
 	    return 1;
 	} else { 
-#   say "#2";
 	    return 0; 
 	}
 
@@ -56,24 +50,39 @@ sub is_allowed_instruction {
 
     # Not running in case of certain tags is prioritized 
     for my $tag (@{$self->{tags}}) {
-# say "#a# $tag";
 	if ($run_not_if_tags{$tag}) {
-#   say "#3";
 	    return 0;
 	}
     }
 
     for my $tag (@{$self->{tags}}) {
-# say "#b# $tag";
 	if ($run_if_tags{$tag}) {
-#   say "#4";
 	    return 1;
 	}
     }
 
     # Default is not to run
-#   say "#5";
     return 0;
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+SqlBatch::PlanTagFilter
+
+=head1 DESCRIPTION
+
+Class to filter out instructions for execution accotding to their matching against given tags
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

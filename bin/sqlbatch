@@ -116,7 +116,7 @@ Comma separated list of tags that specifies running the tagged instructions or n
 
 =item B<-to_file>=endfile.sb
 
-Name of the file finish execution
+Name of the file where the execution finishes
 
 =back
 

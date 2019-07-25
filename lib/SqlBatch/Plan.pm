@@ -111,3 +111,23 @@ sub current_databasehandle {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+SqlBatch::Plan
+
+=head1 DESCRIPTION
+
+This class manages the sqlbatch-instruction sequence and it's execution.
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

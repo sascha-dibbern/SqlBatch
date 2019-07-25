@@ -123,3 +123,22 @@ sub run {
 
 1;
 
+__END__
+
+=head1 NAME
+
+SqlBatch::Engine
+
+=head1 DESCRIPTION
+
+This class is the engine for running  L<sqlbatch>
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

@@ -139,11 +139,132 @@ sub database_handles {
 
 sub DESTROY {
     my $self = shift;
-
-    my $dbh = $self->{database_handle};
-
-    $dbh->disconnect
-	if defined $dbh;
 }
 
 1;
+
+__END__
+    
+=head1 NAME
+
+SqlBatch::Configuration
+
+=head1 DESCRIPTION
+
+The given configuration for executing the sqlbatch engine
+
+=head1 ORIGIN OF CONFIGURATION
+
+The values for the configuration items can either come from L<sqlbatch> commandline arguments or from a dedicatet configuration file.
+
+In the situation of doubble definition the commandline arguments prevail.
+
+=head1 METHODS
+
+=over
+
+=item B<database_handles>
+
+Create and return hash with two database connections. The hash contains to elements:
+
+=over
+
+=item C<autocommitted>
+
+Execution on this database handle enables automatic transaction commit.
+
+=item C<nonautocommitted> :
+
+Execution on this database handle will normally not automatically transaction commit.
+
+In the case of a defined item B<force_autocommit> this database handle will also be autocommit enabled.
+
+=back
+
+=item B<load>
+
+Load the given configuration file
+
+=item B<requirement_assertion($name)>
+
+Check if a configuration item requirements are met or croak/die.
+
+=item B<item($name)>
+
+Return value for the given item or return undef.
+
+=item B<item_hash>
+
+Return a hash of item-names and values
+
+=item B<validate>
+
+Execute method C<requirement_assertion> on all items.
+
+=item B<verbosity>
+
+Return the given verbosity level
+
+=head1 CONFIGURATION ITEMS
+
+=over
+
+=item B<datasource> (required)
+
+A DBI connection string
+
+=item B<directory> (optional)
+
+Path to directory for SQL-batch-files and default configuration file.
+
+=item B<exclude_files> (optional, default=[])
+
+Reference to array of filepaths to exclude in execution.
+
+=item B<force_autocommit> (optional, default=undef)
+
+No nonautocommitted database-handle will be created if defined.
+
+=item B<from_file> (optional, default=undef)
+
+Name of the file to start execution from.
+
+=item B<fileextension> (optional, default='sb')
+
+The fileextension of SQL-batch-files.
+
+=item B<password> (required)
+
+Value of the password for doing the DBI connection
+
+=item B<tags> (optional, default=[])
+
+Reference to array of tags that specify running the tagged instructions or not
+
+=item B<to_file> (optional, default=undef)
+
+Name of the file where the execution finishes
+
+=item B<username> (required)
+
+Value of the username for doing the DBI connection
+
+=item B<verbosity> (optional, default=1)
+
+Level of verbosity
+
+    0 : no output
+    1 : overall steps
+    2 : detailed
+
+=back
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

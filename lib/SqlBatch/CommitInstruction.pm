@@ -1,6 +1,6 @@
 package SqlBatch::CommitInstruction;
 
-# ABSTRACT: Base class for an SQL transaction-commit instruction
+# ABSTRACT: Cxolass for an SQL transaction-commit instruction
 
 use v5.16;
 use strict;
@@ -43,3 +43,23 @@ sub run {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+SqlBatch::CommitInstrution
+
+=head1 DESCRIPTION
+
+This class executes a commit-instruction within a L<SqlBatch::Plan>
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

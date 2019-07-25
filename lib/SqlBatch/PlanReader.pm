@@ -202,7 +202,7 @@ sub load_tasks_file_instructions {
 	    }
 
 	    my $content   = $self->_read_content_section_string(\@lines,%args);
-	    require $class;	    
+	    eval("require $class;";
 	    @instructions = (
 		$class->new(
 		    $self->{config},
@@ -379,3 +379,23 @@ sub _parse_csv {
 } 
 
 1;
+
+__END__
+
+=head1 NAME
+
+SqlBatch::PlanReader
+
+=head1 DESCRIPTION
+
+This class reads the sqlbatch files and loads their content into a L<SqlBatch::Plan>
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
