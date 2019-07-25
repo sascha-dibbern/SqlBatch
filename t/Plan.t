@@ -11,8 +11,14 @@ use Carp;
 use Test::More;
 use Data::Dumper;
 
-use SqlBatch::Plan;
-use SqlBatch::Configuration;
+require_ok('SqlBatch::SqlInstruction');
+require_ok('SqlBatch::InsertInstruction');
+require_ok('SqlBatch::DeleteInstruction');
+require_ok('SqlBatch::BeginInstruction');
+require_ok('SqlBatch::CommitInstruction');
+require_ok('SqlBatch::RollbackInstruction');
+require_ok('SqlBatch::Configuration');
+require_ok('SqlBatch::Plan');
 
 my $conffile1  =<<'FILE1';
 {
@@ -38,53 +44,51 @@ my $delete1_sth;
 my $delete2_sth;
 
 my @seq1 = (
-    {
-	type => 'SQL',
-	sql  => 'create table t (a int,b varchar)',
-    },
-    {
-	type => 'INSERT',
-	table => 't',
-        data => {
+    SqlBatch::SqlInstruction->new($conf1,'create table t (a int,b varchar)'),
+    SqlBatch::InsertInstruction->new(
+	$conf1,
+	{
 	    a => 1,
 	    b => 'first',
 	},
-	sth_placeholder => \$insert_sth,
-    },
-    {
-	type  => 'INSERT',
-	table => 't',
-        data  => {
+	\$insert_sth,
+	table => 't'
+    ),
+    SqlBatch::InsertInstruction->new(
+	$conf1,
+	{
 	    a => 2,
 	    b => 'second',
 	},
-	sth_placeholder => \$insert_sth,
-    },
-    {
-	type  => 'INSERT',
-	table => 't',
-        data  => {
+	\$insert_sth,
+	table => 't'
+    ),
+    SqlBatch::InsertInstruction->new(
+	$conf1,
+	{
 	    a => 3,
 	    b => 'third',
 	},
-	sth_placeholder => \$insert_sth,
-    },
-    {
-	type  => 'DELETE',
-	table => 't',
-        data  => {
+	\$insert_sth,
+	table => 't'
+    ),
+
+    SqlBatch::DeleteInstruction->new(
+	$conf1,
+	{
 	    a => 1,
 	},
-	sth_placeholder => \$delete1_sth,
-    },
-    {
-	type  => 'DELETE',
-	table => 't',
-        data  => {
+	\$delete1_sth,
+	table => 't'
+    ),
+    SqlBatch::DeleteInstruction->new(
+	$conf1,
+	{
 	    b => 'second',
 	},
-	sth_placeholder => \$delete2_sth,
-    },
+	\$delete2_sth,
+	table => 't'
+    ),
 );
 
 $plan1->add_instructions(@seq1);
