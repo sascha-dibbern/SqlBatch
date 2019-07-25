@@ -12,6 +12,7 @@ use Getopt::Long qw(GetOptionsFromArray);
 use DBI;
 use JSON::Parse 'json_file_to_perl';
 use Data::Dumper;
+use SqlBatch::AbstractConfiguration;
 
 sub new {
     my ($class, $config_file_path, %overrides)=@_;
@@ -21,15 +22,14 @@ sub new {
 	    unless (ref($overrides{database_attributes}) eq 'HASH');
     }
        
-    my $self = {
-	config_file_path => $config_file_path,
-	overrides        => \%overrides,
-	requirements     => {
+    my $self = SqlBatch::AbstractConfiguration->new(%overrides);
+
+    $self->{config_file_path} = $config_file_path;
+    $self->{requirements}     = {
 	    datasource          => 1,
 	    username            => 1,
 	    password            => 1,
-	},
-    };
+	};
 
     $self = bless $self, $class;
 

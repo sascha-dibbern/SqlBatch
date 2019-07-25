@@ -10,8 +10,7 @@ use lib qw(../lib);
 use Carp;
 use Test::More;
 
-use SqlBatch::SqlInstruction;
-
+require_ok('SqlBatch::AbstractConfiguration');
 require_ok('SqlBatch::AbstractPlan');
 require_ok('SqlBatch::InstructionBase');
 require_ok('SqlBatch::SqlInstruction');
@@ -20,7 +19,7 @@ require_ok('SqlBatch::DeleteInstruction');
 require_ok('SqlBatch::BeginInstruction');
 require_ok('SqlBatch::CommitInstruction');
 require_ok('SqlBatch::RollbackInstruction');
-
+require_ok('SqlBatch::Configuration');
 require_ok('SqlBatch::PlanReader');
 
 use Data::Dumper;
@@ -65,7 +64,7 @@ FILE1
 ;
 
 my $plan1 = Testplan->new();
-my $reader1 = SqlBatch::PlanReader->new(undef,$plan1,"config");
+my $reader1 = SqlBatch::PlanReader->new(undef,$plan1,SqlBatch::AbstractConfiguration->new());
 $reader1->files(\$file1);
 
 eval { $reader1->load };
