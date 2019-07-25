@@ -15,7 +15,8 @@ use File::Spec;
 require_ok('SqlBatch::Engine');
 
 my ($volume, $bindir, undef) = File::Spec->splitpath($0);
-my $testrun1_dir    = File::Spec->catpath($volume, $bindir, 'testrun1');
+my $binbase_dir     = File::Spec->catpath($volume, $ENV{PWD}, $bindir);
+my $testrun1_dir    = File::Spec->catpath($volume, $binbase_dir, 'testrun1');
 my $testrun1_config = File::Spec->catpath($volume, $testrun1_dir, 'sb.conf');
 
 my $testsub = sub {
@@ -24,7 +25,7 @@ my $testsub = sub {
     my $expect2 = shift;
 
     my $app = SqlBatch::Engine->new(
-	"-directory=testrun1",
+	"-directory=$testrun1_dir",
 	"-configfile=$testrun1_config",
 	"-verbosity=2",
 	$tags,
