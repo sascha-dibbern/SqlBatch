@@ -202,7 +202,7 @@ sub load_tasks_file_instructions {
 	    }
 
 	    my $content   = $self->_read_content_section_string(\@lines,%args);
-	    eval("require $class;";
+	    eval("require $class;");
 	    @instructions = (
 		$class->new(
 		    $self->{config},
