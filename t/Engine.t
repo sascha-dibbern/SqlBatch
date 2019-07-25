@@ -10,9 +10,13 @@ use lib qw(../lib);
 use Carp;
 use Test::More;
 use Data::Dumper;
+use File::Spec;
 
-use SqlBatch::Engine;
 require_ok('SqlBatch::Engine');
+
+my ($volume, $bindir, undef) = File::Spec->splitpath($0);
+my $testrun1_dir    = File::Spec->catpath($volume, $bindir, 'testrun1');
+my $testrun1_config = File::Spec->catpath($volume, $testrun1_dir, 'sb.conf');
 
 my $testsub = sub {
     my $tags = shift;
@@ -21,7 +25,7 @@ my $testsub = sub {
 
     my $app = SqlBatch::Engine->new(
 	"-directory=testrun1",
-	"-configfile=-",
+	"-configfile=$testrun1_config",
 	"-verbosity=2",
 	$tags,
 	);
