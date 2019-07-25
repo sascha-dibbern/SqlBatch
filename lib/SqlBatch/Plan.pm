@@ -20,7 +20,7 @@ sub new {
 	$config,	
 	filters       => [],
 	instructions  => [],
-	runstate     => SqlBatch::RunState->new(),
+	runstate      => SqlBatch::RunState->new(),
     );
 
     return bless $self, $class;
@@ -35,6 +35,9 @@ sub add_instructions {
     my $self         = shift;
     my @instructions = @_;
 
+    my $address = scalar(@{$self->{instructions}});
+
+    my $new_instructions;
     if (scalar(@{$self->{filters}})) {
 	my @filtered = grep {
 	    my $ok_sum = 0;
@@ -47,17 +50,17 @@ sub add_instructions {
 	    $ok_sum;
 	} @instructions;
 
-	push @{$self->{instructions}},@filtered;
+	$new_instructions = \@filtered;
     } else {
-	push @{$self->{instructions}},@instructions;
+	$new_instructions = \@instructions;
     }
 
-    # Give instructions a self-awareness of their address
-    my $address = 0;
-    for my $instruction (@{$self->{instructions}}) {
-	$instruction->address($address);
+    push @{$self->{instructions}},map {
+	$_->address($address);
 	$address++;
-    }
+	$_
+    } @$new_instructions;
+
 }
 
 sub run {
