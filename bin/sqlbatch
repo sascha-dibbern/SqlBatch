@@ -208,7 +208,7 @@ Comma separated list for matching tags to execute the instruction og non-matchin
     '1';'2'
     --END--
     # Next section runs in when "setup"-tag is defined and NOT "production" tag
-    --SQL-- -id=sql2 -tags=setup,-!production
+    --SQL-- -id=sql2 -tags=setup,!production
     create table x (a int)
     --END--
 
@@ -283,6 +283,15 @@ Rollback a transaction, if autocommit-mode is not enabled
 Execute the SQL-statement written into the instruction content.
 
 =back
+
+=head1 AUTHOR
+
+Sascha Dibbern (sascha at dibbern.info)
+
+=head1 LICENCE
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
  
 =cut
 
