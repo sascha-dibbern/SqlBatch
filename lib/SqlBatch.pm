@@ -29,7 +29,15 @@ The program that runs the SQL-batch script
 
 =item L<SqlBatch::InstructionBase>
 
-Base class for creating  special Perl-based SQL-batch instructions
+Base class for creating special Perl-based SQL-batch instructions
+
+=item L<SqlBatch::Configuration>
+
+Class defining the configuration to be executed
+
+=item L<SqlBatch::RunState>
+
+Class defining the runstate for an instruction
 
 =back
 
