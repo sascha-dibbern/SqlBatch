@@ -205,6 +205,8 @@ Execute method C<requirement_assertion> on all items.
 
 Return the given verbosity level
 
+=back
+
 =head1 CONFIGURATION ITEMS
 
 =over

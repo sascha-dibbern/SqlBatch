@@ -77,6 +77,7 @@ SqlBatch::RunState
 =head1 DESCRIPTION
 
 State information for transport from one sqlbatch instruction to another.
+
 =head1 BUILDIN METHODS
 
 =over
@@ -101,6 +102,6 @@ A transaction will be executed automatically a SQL-statement is executed via the
 
 =head1 AUTOLOADED METHODS
 
-New set/get-methods will automatically be created a soon the are called with a name and a value-argument i.e. C<$runstate->myitem("myvalue")> create a new method "myitem" and gives a created internal "myitem" attribute the value "myvalue".
+New set/get-methods will automatically be created a soon they are called with a name and a value-argument i.e. C<$runstate->myitem("myvalue")> creates a new method "myitem" and gives a created internal "myitem" attribute the value "myvalue".
 
 =cut
